@@ -1,0 +1,10 @@
+Disciplina: Desenvolvimento para Ambientes Móveis
+Entrega: Capstone — Parte 2
+Squad: 3
+Integrantes: 
+    VICTOR HENRIQUE SANTANA DE SOUZA
+    FELIPE CUNHA FERREIRA
+    EMANUELLE GRACE DOS SANTOS ALVES PAIM
+    JOAO VITOR PEREIRA RIBEIRO
+Data da entrega: [17/05/2026]
+Link do repositório: https://github.com/VictorHSSouza/app_cardapio_virtual
