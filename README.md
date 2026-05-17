@@ -72,6 +72,7 @@ https://github.com/VictorHSSouza/app_cardapio_virtual
 
 O protótipo das telas pode ser acessado pelo link abaixo:
 
+https://www.figma.com/make/yuCUg5FXI7tnKVCfIdjh0x/Sem-t%C3%ADtulo?code-node-id=0-9&p=f&fullscreen=1&preview-route=%2Fhome
 https://victorhssouza.github.io/app_cardapio_virtual/
 
 ---
