@@ -72,7 +72,8 @@ https://github.com/VictorHSSouza/app_cardapio_virtual
 
 O protótipo das telas pode ser acessado pelo link abaixo:
 
-https://humid-ethics-80897019.figma.site/
+https://humid-ethics-80897019.figma.site/ 
+
 https://victorhssouza.github.io/app_cardapio_virtual/
 
 ---
