@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/produto.dart';
+import 'pagamento_screen.dart';
 
 class CarrinhoPage extends StatefulWidget {
   final Map<Produto, int> carrinho;
@@ -154,8 +155,13 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
                             ),
                           ),
                           onPressed: () {
-                            Navigator.pop(context);
-                            widget.onFinalizarCompra();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    PagamentoScreen(total: valorTotal),
+                              ),
+                            );
                           },
                           child: const Text(
                             'COMPRAR',
