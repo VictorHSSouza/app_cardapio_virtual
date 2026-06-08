@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'screens/login_screen.dart';
+import 'services/notificacao_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,6 +60,11 @@ class _AppInitializerState extends State<AppInitializer> {
       );
     } else {
       await Firebase.initializeApp();
+    }
+
+    // Inicializa notificações locais (apenas em plataformas nativas)
+    if (!kIsWeb) {
+      await NotificacaoService.inicializar();
     }
   }
 

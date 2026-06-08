@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
-import '../models/produto.dart';
+import '../models/Produto.dart';
 import 'pagamento_screen.dart';
 
 class CarrinhoPage extends StatefulWidget {
   final Map<Produto, int> carrinho;
   final Function(Produto) onRemoverProduto;
   final VoidCallback onFinalizarCompra;
+  final bool mostrarAppBar;
 
   const CarrinhoPage({
     super.key,
     required this.carrinho,
     required this.onRemoverProduto,
     required this.onFinalizarCompra,
+    this.mostrarAppBar = true,
   });
 
   @override
@@ -27,14 +29,33 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
     return total;
   }
 
+  List<Map<String, dynamic>> get itensPedido {
+    return widget.carrinho.entries.map((entry) {
+      final produto = entry.key;
+      final quantidade = entry.value;
+
+      return {
+        'produtoId': produto.docId.isNotEmpty ? produto.docId : produto.id.toString(),
+        'nome': produto.nome,
+        'quantidade': quantidade,
+        'preco': produto.preco,
+        'imagemUrl': produto.imagemUrl,
+        'categoria': produto.category,
+      };
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Meu Carrinho'),
-        backgroundColor: Colors.red[600],
-        foregroundColor: Colors.white,
-      ),
+      appBar: widget.mostrarAppBar
+          ? AppBar(
+              title: const Text('Meu Carrinho'),
+              backgroundColor: Colors.red[600],
+              foregroundColor: Colors.white,
+              automaticallyImplyLeading: false,
+            )
+          : null,
       body: widget.carrinho.isEmpty
           ? const Center(
               child: Text(
@@ -76,7 +97,7 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
                               ),
                             ),
                             subtitle: Text(
-                              '$quantidade x R\$ ${produto.preco.toStringAsFixed(2)}',
+                              'R\$ ${produto.preco.toStringAsFixed(2)} cada  •  Subtotal: R\$ ${subtotal.toStringAsFixed(2)}',
                             ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -88,16 +109,39 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
                                     color: Colors.grey[800],
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.delete_outline_rounded,
-                                    color: Colors.red,
-                                  ),
-                                  onPressed: () {
-                                    widget.onRemoverProduto(produto);
-                                    setState(() {});
-                                  },
+                                const SizedBox(width: 4),
+                                // Botões de quantidade
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                                      onPressed: () {
+                                        setState(() {
+                                          if (quantidade > 1) {
+                                            widget.carrinho[produto] = quantidade - 1;
+                                          } else {
+                                            widget.onRemoverProduto(produto);
+                                          }
+                                        });
+                                      },
+                                    ),
+                                    Text(
+                                      '$quantidade',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.add_circle_outline, color: Colors.red),
+                                      onPressed: () {
+                                        setState(() {
+                                          widget.carrinho[produto] = quantidade + 1;
+                                        });
+                                      },
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -158,8 +202,10 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    PagamentoScreen(total: valorTotal),
+                                builder: (context) => PagamentoScreen(
+                                  total: valorTotal,
+                                  itens: itensPedido,
+                                ),
                               ),
                             );
                           },

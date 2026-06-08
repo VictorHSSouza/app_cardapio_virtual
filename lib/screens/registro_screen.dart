@@ -39,13 +39,14 @@ class _RegistrarPageState extends State<RegistrarPage> {
       // Atualiza o nome de exibição no Firebase Auth
       await credencial.user?.updateDisplayName(_nomeController.text.trim());
 
-      // Salva os dados completos (incluindo telefone) no Firestore
+      // Salva os dados completos (incluindo telefone e tipo) no Firestore
       await UsuarioService.salvar(
         Pessoa(
           uid: uid,
           nome: _nomeController.text.trim(),
           email: _emailController.text.trim(),
           telefone: _telefoneController.text.trim(),
+          tipo: 'cliente',
         ),
       );
 
