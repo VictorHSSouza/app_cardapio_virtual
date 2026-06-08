@@ -554,10 +554,25 @@ class _PagamentoScreenState extends State<PagamentoScreen> {
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600)),
                               const SizedBox(height: 14),
-                              TextField(
+                              TextFormField(
                                 controller: trocoController,
-                                keyboardType: TextInputType.number,
-                                decoration: _dec('R\$ 0,00'),
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                decoration: _dec('Ex: R\$ 50,00'),
+                                validator: (v) {
+                                  if (v == null || v.trim().isEmpty) {
+                                    return 'Informe o valor para troco';
+                                  }
+                                  final valor = double.tryParse(
+                                    v.trim().replaceAll(',', '.'),
+                                  );
+                                  if (valor == null) {
+                                    return 'Valor inválido';
+                                  }
+                                  if (valor <= widget.total) {
+                                    return 'O valor deve ser maior que R\$ ${widget.total.toStringAsFixed(2)}';
+                                  }
+                                  return null;
+                                },
                               ),
                             ],
                           ),

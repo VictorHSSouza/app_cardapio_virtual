@@ -87,7 +87,7 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 const Image(
                   image: NetworkImage(
-                    'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+                    'https://cdn-icons-png.flaticon.com/512/2771/2771406.png',
                   ),
                   width: 150,
                   height: 150,
