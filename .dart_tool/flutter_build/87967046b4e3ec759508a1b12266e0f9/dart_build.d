@@ -1,0 +1,1 @@
+ C:\\Users\\vhsouza.plansul\\Documents\\Testes\\AmbMov\\app_cardapio_virtual\\.dart_tool\\flutter_build\\87967046b4e3ec759508a1b12266e0f9\\dart_build_result.json: 
