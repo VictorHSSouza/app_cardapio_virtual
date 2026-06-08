@@ -31,16 +31,24 @@
 
   <title>app_cardapio_virtual</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Firebase Web SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+    const firebaseConfig = {
+      apiKey: "AIzaSyCKTaTwL3yp3dqwgtgHxN7pu8M1PxnpUN8",
+      authDomain: "appcardapio-c6f77.firebaseapp.com",
+      projectId: "appcardapio-c6f77",
+      storageBucket: "appcardapio-c6f77.firebasestorage.app",
+      messagingSenderId: "193708960557",
+      appId: "1:193708960557:web:72749db803392c1c3a41a4",
+      measurementId: "G-M08565DR4C"
+    };
+    const app = initializeApp(firebaseConfig);
+    window.firebaseConfig = firebaseConfig;
+  </script>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
-
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

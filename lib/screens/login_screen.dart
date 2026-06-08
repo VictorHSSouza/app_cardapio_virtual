@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'registro_screen.dart';
 import 'home_screen.dart';
 
@@ -11,35 +12,65 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _esconderSenha = true;
+  bool _carregando = false;
   final _formKey = GlobalKey<FormState>();
-  final _nomeController = TextEditingController();
+  final _emailController = TextEditingController();
   final _senhaController = TextEditingController();
 
-  void validarLogin() {
-    if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Login realizado com sucesso!'),
-          backgroundColor: Colors.green,
-        ),
+  Future<void> validarLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _carregando = true);
+
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _senhaController.text,
       );
+
+      if (!mounted) return;
 
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (context) => HomePage(
-            emailUsuario: _nomeController.text.trim(),
-            senhaUsuario: _senhaController.text,
-          ),
-        ),
+        MaterialPageRoute(builder: (context) => const HomePage()),
         (route) => false,
       );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      String mensagem;
+      switch (e.code) {
+        case 'user-not-found':
+        case 'invalid-credential':
+          mensagem = 'E-mail ou senha inválidos.';
+          break;
+        case 'wrong-password':
+          mensagem = 'Senha incorreta.';
+          break;
+        case 'invalid-email':
+          mensagem = 'E-mail inválido.';
+          break;
+        case 'user-disabled':
+          mensagem = 'Esta conta foi desativada.';
+          break;
+        case 'too-many-requests':
+          mensagem = 'Muitas tentativas. Tente novamente mais tarde.';
+          break;
+        default:
+          mensagem = 'Erro ao fazer login. Tente novamente.';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(mensagem), backgroundColor: Colors.red[700]),
+      );
+    } finally {
+      if (mounted) setState(() => _carregando = false);
     }
   }
 
   @override
   void dispose() {
-    _nomeController.dispose();
+    _emailController.dispose();
     _senhaController.dispose();
     super.dispose();
   }
@@ -104,11 +135,14 @@ class _LoginPageState extends State<LoginPage> {
                   child: Column(
                     children: [
                       TextFormField(
-                        controller: _nomeController,
+                        controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Digite seu email';
+                          }
+                          if (!value.contains('@')) {
+                            return 'Digite um e-mail válido';
                           }
                           return null;
                         },
@@ -174,9 +208,18 @@ class _LoginPageState extends State<LoginPage> {
                   height: 50,
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: validarLogin,
-                    icon: const Icon(Icons.login),
-                    label: const Text('Entrar'),
+                    onPressed: _carregando ? null : validarLogin,
+                    icon: _carregando
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Icon(Icons.login),
+                    label: Text(_carregando ? 'Entrando...' : 'Entrar'),
                     style: ElevatedButton.styleFrom(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15.0),
@@ -243,6 +286,8 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ),
+
+                const SizedBox(height: 32),
               ],
             ),
           ),

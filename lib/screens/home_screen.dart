@@ -1,18 +1,14 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../models/Pessoa.dart';
+import '../services/usuario_service.dart';
 import 'login_screen.dart';
 import 'carrinho_screen.dart';
 import '../models/produto.dart';
 
 class HomePage extends StatefulWidget {
-  final String emailUsuario;
-  final String senhaUsuario;
-
-  const HomePage({
-    super.key,
-    required this.emailUsuario,
-    required this.senhaUsuario,
-  });
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -23,14 +19,19 @@ class _HomePageState extends State<HomePage> {
   String _textoBusca = '';
   int _abaAtual = 0;
 
+  // Lê o email do usuário autenticado no Firebase
+  String get _emailUsuario =>
+      FirebaseAuth.instance.currentUser?.email ?? 'Usuário';
+
   String get _primeiroNome {
-    if (widget.emailUsuario.contains('@')) {
-      String antesDoArroba = widget.emailUsuario.split('@')[0];
+    final email = _emailUsuario;
+    if (email.contains('@')) {
+      final antesDoArroba = email.split('@')[0];
       if (antesDoArroba.isEmpty) return 'Usuário';
       return antesDoArroba.substring(0, 1).toUpperCase() +
           antesDoArroba.substring(1);
     }
-    return widget.emailUsuario.isEmpty ? 'Usuário' : widget.emailUsuario;
+    return email.isEmpty ? 'Usuário' : email;
   }
 
   final Map<Produto, int> _carrinho = {};
@@ -580,6 +581,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _mostrarModalPerfil() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -620,40 +623,77 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(height: 16),
-              ListTile(
-                leading: const Icon(Icons.email_outlined, color: Colors.red),
-                title: const Text(
-                  'E-mail cadastrado',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-                subtitle: Text(
-                  widget.emailUsuario,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
+
+              // Busca dados do Firestore
+              FutureBuilder<Pessoa?>(
+                future: uid != null ? UsuarioService.buscar(uid) : null,
+                builder: (context, snapshot) {
+                  final pessoa = snapshot.data;
+
+                  return Column(
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.person_outline, color: Colors.red),
+                        title: const Text(
+                          'Nome',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        subtitle: Text(
+                          pessoa?.nome.isNotEmpty == true
+                              ? pessoa!.nome
+                              : (snapshot.connectionState ==
+                                        ConnectionState.waiting
+                                    ? 'Carregando...'
+                                    : 'Não informado'),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.email_outlined, color: Colors.red),
+                        title: const Text(
+                          'E-mail',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        subtitle: Text(
+                          _emailUsuario,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.phone_outlined, color: Colors.red),
+                        title: const Text(
+                          'Telefone',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        subtitle: Text(
+                          pessoa?.telefone.isNotEmpty == true
+                              ? pessoa!.telefone
+                              : (snapshot.connectionState ==
+                                        ConnectionState.waiting
+                                    ? 'Carregando...'
+                                    : 'Não informado'),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
-              const Divider(height: 1),
-              ListTile(
-                leading: const Icon(
-                  Icons.lock_outline_rounded,
-                  color: Colors.red,
-                ),
-                title: const Text(
-                  'Senha',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-                subtitle: Text(
-                  widget.senhaUsuario,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
+
               const SizedBox(height: 24),
 
               SizedBox(
@@ -672,7 +712,9 @@ class _HomePageState extends State<HomePage> {
                     'Sair da Conta',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
+                    await FirebaseAuth.instance.signOut();
+                    if (!context.mounted) return;
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(

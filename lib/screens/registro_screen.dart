@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../models/Pessoa.dart';
+import '../services/usuario_service.dart';
 import 'login_screen.dart';
-import '../models/pessoa.dart';
 
 class RegistrarPage extends StatefulWidget {
   const RegistrarPage({super.key});
@@ -11,17 +13,43 @@ class RegistrarPage extends StatefulWidget {
 
 class _RegistrarPageState extends State<RegistrarPage> {
   bool _esconderSenha = true;
+  bool _carregando = false;
   final _formKey = GlobalKey<FormState>();
 
   final _nomeController = TextEditingController();
   final _emailController = TextEditingController();
   final _senhaController = TextEditingController();
+  final _telefoneController = TextEditingController();
 
-  void validarRegistro() {
-    if (_formKey.currentState!.validate()) {
-      final nome = _nomeController.text.trim();
-      final email = _emailController.text.trim();
-      final senha = _senhaController.text.trim();
+  Future<void> validarRegistro() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _carregando = true);
+
+    try {
+      // Cria o usuário no Firebase Auth
+      final credencial = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _senhaController.text,
+          );
+
+      final uid = credencial.user!.uid;
+
+      // Atualiza o nome de exibição no Firebase Auth
+      await credencial.user?.updateDisplayName(_nomeController.text.trim());
+
+      // Salva os dados completos (incluindo telefone) no Firestore
+      await UsuarioService.salvar(
+        Pessoa(
+          uid: uid,
+          nome: _nomeController.text.trim(),
+          email: _emailController.text.trim(),
+          telefone: _telefoneController.text.trim(),
+        ),
+      );
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -30,16 +58,37 @@ class _RegistrarPageState extends State<RegistrarPage> {
         ),
       );
 
-      Pessoa novaPessoa = Pessoa(nome: nome, email: email, senha: senha);
-
-      _nomeController.clear();
-      _emailController.clear();
-      _senhaController.clear();
-
-      Navigator.push(
+      Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const LoginPage()),
+        (route) => false,
       );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      String mensagem;
+      switch (e.code) {
+        case 'email-already-in-use':
+          mensagem = 'Este e-mail já está cadastrado.';
+          break;
+        case 'invalid-email':
+          mensagem = 'E-mail inválido.';
+          break;
+        case 'weak-password':
+          mensagem = 'Senha muito fraca. Use pelo menos 6 caracteres.';
+          break;
+        case 'operation-not-allowed':
+          mensagem = 'Cadastro por e-mail desativado. Contate o suporte.';
+          break;
+        default:
+          mensagem = 'Erro ao criar conta. Tente novamente.';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(mensagem), backgroundColor: Colors.red[700]),
+      );
+    } finally {
+      if (mounted) setState(() => _carregando = false);
     }
   }
 
@@ -48,6 +97,7 @@ class _RegistrarPageState extends State<RegistrarPage> {
     _nomeController.dispose();
     _emailController.dispose();
     _senhaController.dispose();
+    _telefoneController.dispose();
     super.dispose();
   }
 
@@ -91,7 +141,7 @@ class _RegistrarPageState extends State<RegistrarPage> {
                   key: _formKey,
                   child: Column(
                     children: [
-                      // Campo de Nome Completo
+                      // Nome
                       TextFormField(
                         controller: _nomeController,
                         textCapitalization: TextCapitalization.words,
@@ -117,6 +167,7 @@ class _RegistrarPageState extends State<RegistrarPage> {
 
                       const SizedBox(height: 16),
 
+                      // Email
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
@@ -145,7 +196,36 @@ class _RegistrarPageState extends State<RegistrarPage> {
 
                       const SizedBox(height: 16),
 
-                      // Campo de Senha
+                      // Telefone
+                      TextFormField(
+                        controller: _telefoneController,
+                        keyboardType: TextInputType.phone,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Por favor, insira seu telefone';
+                          }
+                          if (value.replaceAll(RegExp(r'\D'), '').length < 10) {
+                            return 'Telefone inválido';
+                          }
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Telefone',
+                          hintText: '(00) 00000-0000',
+                          hintStyle: const TextStyle(color: Colors.grey),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15.0),
+                          ),
+                          suffixIcon: const Padding(
+                            padding: EdgeInsets.only(right: 4.0),
+                            child: Icon(Icons.phone),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Senha
                       TextFormField(
                         controller: _senhaController,
                         obscureText: _esconderSenha,
@@ -192,9 +272,20 @@ class _RegistrarPageState extends State<RegistrarPage> {
                   height: 50,
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: validarRegistro,
-                    icon: const Icon(Icons.person_add),
-                    label: const Text('Registrar-se'),
+                    onPressed: _carregando ? null : validarRegistro,
+                    icon: _carregando
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Icon(Icons.person_add),
+                    label: Text(
+                      _carregando ? 'Cadastrando...' : 'Registrar-se',
+                    ),
                     style: ElevatedButton.styleFrom(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15.0),
@@ -207,6 +298,8 @@ class _RegistrarPageState extends State<RegistrarPage> {
                     ),
                   ),
                 ),
+
+                const SizedBox(height: 32),
               ],
             ),
           ),
