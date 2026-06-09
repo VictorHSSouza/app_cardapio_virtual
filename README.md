@@ -21,6 +21,16 @@
 
 ---
 
+## Acesso para Avaliação
+
+| Perfil | E-mail | Senha |
+|---|---|---|
+| Administrador | admin@gmail.com | 123456 |
+
+> Utilize essas credenciais para acessar o sistema com permissões de administrador e avaliar as funcionalidades restritas ao perfil admin (gestão de produtos, pedidos e relatórios).
+
+---
+
 ## Links
 
 | Recurso | Link |
